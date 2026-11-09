@@ -19,6 +19,6 @@ for segment in image.segments:
 print('PASS: image entry and loaded segments are in reserved internal SRAM')
 PY
 "${tool_prefix}size" build/linux-shell.elf
-sha256sum ../../Makefile Makefile prepare.sh check-build.sh start.S main.c memory.ld rom-functions.ld build.sh run.py test_host.py ../../esp32c5.dts build/Image build/c5-early.dtb build/linux-shell.elf build/linux-shell.bin > build/SHA256SUMS
+sha256sum ../../Makefile Makefile prepare.sh check-build.sh start.S main.c memory.ld rom-functions.ld build.sh ../../esp32c5.dts build/Image build/c5-early.dtb build/linux-shell.elf build/linux-shell.bin > build/SHA256SUMS
 cat build/reference-SHA256SUMS >> build/SHA256SUMS
 printf 'Host build complete. No board was accessed. Image: %s/build/linux-shell.bin\n' "$PWD"

@@ -5,6 +5,7 @@
 # Dependencies and generated artifacts
 /reference/
 /kernel/linux-6.12/
+/kernel/.prepare.*/
 **/build/
 /user/toolchain/output
 /user/toolchain/smoke/
@@ -31,6 +32,3 @@ __pycache__/
 .env.*
 *.pem
 *.key
-
-/scripts/public-source.py
-/scripts/test-public-source.py

@@ -32,3 +32,21 @@ automatically attached to the newly built binaries.
 The published source carries no raw private evidence archives. Maintainers can
 provide a separately reviewed, redacted excerpt if needed. Follow BOARD.md to
 produce your own device-specific results, keeping backups private.
+
+## Platform-source split
+
+The canonical new kernel files are now in kernel/platform/. The smaller root
+patch changes existing upstream files only. A fresh preparation test applied
+that patch to pristine upstream inputs, installed the platform sources, and
+verified every output against the previous complete port hashes. No kernel
+implementation was duplicated merely to change language statistics.
+
+The legacy RAM uploader and protocol experiments are local research archives.
+Public tests retain Flash bounds/readback/recovery, console/boot assessment,
+SRAM command policy, rootfs serialization and selected actual kernel regressions.
+The publication helper itself is a local maintainer tool and is not shipped.
+
+After the split, BusyBox/rootfs manifests, kernel, SRAM service, DTB and loaders
+were rebuilt/repackaged. The retained host suites passed: 2 SRAM-service,
+2 rootfs, 6 selected kernel and 24 Flash/console regressions (34 total).
+No new hardware test or Flash write was performed during this organization work.

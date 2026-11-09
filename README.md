@@ -17,15 +17,17 @@ not qualified. The loader still stages rootfs in PSRAM; this is not Flash XIP.
 ```text
 Makefile, build.sh       Host build entry points
 linux.config            Kernel configuration seed
-linux.patch             Linux platform changes
+linux.patch             Upstream integration hooks and build changes
 esp32c5.dts             Board description
-kernel/                 Source preparation, checks, SRAM Flash service
+kernel/platform/        Canonical C5 kernel C/assembly/header sources
+kernel/                 Shell preparation, source checks, SRAM Flash service
 bootloader/             SRAM Flash loader, linker script, board tools
-bootloader/psram/       Shared PSRAM bootstrap and legacy transport helpers
+bootloader/psram/       Shared low-level PSRAM bootstrap
 user/toolchain/         Buildroot RV32 NOMMU toolchain configuration
 user/busybox/           BusyBox configuration and checks
 user/rootfs/            /init, overlay, standard cramfs packaging
-scripts/                Pinned source fetching and source-only publication
+scripts/                Pinned source fetching
+tests/                  Flash/console and selected kernel regressions
 ```
 
 The layout follows the STM32H7 reference's explicit Makefile/config/DTS/loader

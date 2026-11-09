@@ -4,13 +4,19 @@ The root Makefile contains the actual Buildroot, BusyBox and Linux recipes.
 `build.sh` sequences fetching and building. `bootloader/Makefile` compiles,
 links and converts the loader ELF with esptool. `memory.ld` controls SRAM
 placement. `kernel/flash-service/Makefile` builds the separate SRAM service.
+C5 kernel implementations live in kernel/platform/ and are copied into the
+upstream tree by kernel/install.sh. linux.patch contains only integration hooks
+and changes to existing upstream files. kernel/prepare.sh applies the patch,
+installs the platform sources and checks kernel/port.sha256.
+
 Python remains for metadata, validation and serial tooling; rootfs serialization
 uses standard mkfs.cramfs under fakeroot.
 
 Run the stages in README order. Individual targets require preceding artifacts.
 `make kernel` also assembles rootfs and the SRAM service. `make ram-loader`
-builds the DTB and shared bootstrap imported by the Flash loader; its old live
-RAM upload protocol cannot transfer this independent rootfs and is rejected.
+builds the DTB and shared bootstrap imported by the Flash loader; no live
+RAM uploader is shipped. bootloader/console.py provides only the terminal and
+ledger functions needed by the current Flash capture workflow.
 `make flash-image` produces five payloads and a checked plan under
 `bootloader/build/`. `make check` performs host checks, never hardware tests.
 

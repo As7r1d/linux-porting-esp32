@@ -6,30 +6,6 @@ from pathlib import Path
 import serial
 ROOT=Path(__file__).resolve().parent
 
-class QuietSerial(serial.Serial):
-    """Keep initial boot capture unchanged; opt into quieter close/reopen.
-
-    The OS/device can still generate control changes. This cannot guarantee
-    absence of a reset; fresh nonce/no-new-boot evidence is still required.
-    """
-    quiet_mode=False
-    def _update_dtr_state(self):
-        if not self.quiet_mode:super()._update_dtr_state()
-    def _update_rts_state(self):
-        if not self.quiet_mode:super()._update_rts_state()
-    def _clear_hupcl(self):
-        attrs=termios.tcgetattr(self.fd)
-        if attrs[2] & termios.HUPCL:
-            attrs[2] &= ~termios.HUPCL
-            termios.tcsetattr(self.fd,termios.TCSANOW,attrs)
-        self.hupcl_disabled=not bool(termios.tcgetattr(self.fd)[2] & termios.HUPCL)
-    def enable_quiet(self):
-        self._clear_hupcl()
-        self.quiet_mode=True
-        print('HOST REOPEN POLICY: HUPCL cleared; subsequent opens skip explicit DTR/RTS writes.',flush=True)
-    def _reconfigure_port(self,force_update=False):
-        super()._reconfigure_port(force_update)
-        if self.quiet_mode:self._clear_hupcl()
 
 def assess(raw):
     if b'C5 INIT FAIL' in raw:
@@ -47,8 +23,7 @@ def assess(raw):
     return 0,'PASS (limited): Flash-loader verified payload and reached Linux BusyBox prompt after owner reset; full power-cycle/unattended operation untested'
 
 def session_tools():
-    # Import helpers only; run_path does not invoke the RAM uploader's main().
-    return runpy.run_path(str(ROOT.parent/'bootloader/psram/run.py'))
+    return runpy.run_path(str(ROOT/'console.py'))
 
 def assess_interactive(raw,helpers):
     boot_code,_=assess(raw)
@@ -89,46 +64,6 @@ def interact(port,raw,record,txlog,seconds,hard_end,helpers,terminal_factory=Non
         return assess_interactive(raw,helpers)
     finally:terminal.close()
 
-def reconnect_session(port,raw,record,txlog,helpers,clock=None,pause=None,nonce=None):
-    """Fresh challenge before/after one host close/open; no reset or ROM calls."""
-    clock=clock or time.monotonic;pause=pause or time.sleep
-    nonce=nonce or secrets.token_hex(8).encode()
-    if not re.fullmatch(rb'[0-9a-f]{16}',nonce):raise ValueError('Invalid reconnect nonce')
-    policy=re.search(rb'C5 USB RESET POLICY before=[0-9a-f]{8} after=([0-9a-f]{8}) serial_reset_disabled=1',raw)
-    if not policy or not (int(policy[1],16)&4):
-        return 2,'INCONCLUSIVE: reset-policy readback marker missing; reconnect not attempted'
-    boot_count=raw.count(b'C5 FLASH BOOT v1');linux_count=raw.count(b'Linux version 6.12')
-    def send(command):
-        txlog.write(command);txlog.flush()
-        if port.write(command)!=len(command):raise RuntimeError('Short reconnect-test command write')
-    def await_response(start,marker,prompt=True):
-        end=clock()+15
-        while clock()<end:
-            data=port.read(min(max(port.in_waiting,1),4096))
-            if data:record(data)
-            if assess(raw)[0]==1:raise RuntimeError('Reset/trap/panic during reconnect test')
-            if raw.count(b'C5 FLASH BOOT v1')!=boot_count or raw.count(b'Linux version 6.12')!=linux_count:
-                raise RuntimeError('A new boot occurred; reconnect did not preserve the running shell')
-            pos=raw.find(marker,start)
-            if pos>=0 and (not prompt or raw.find(b'/ # ',pos+len(marker))>=0):return
-        raise TimeoutError('Fresh shell response missing after host reconnect')
-    def challenge(stage):
-        start=len(raw)
-        send(b"printf 'C5LINK:"+nonce+b':'+stage+b":%s\\n' \"$$\"\n")
-        await_response(start,b'C5LINK:'+nonce+b':'+stage+b':1\r\n')
-    challenge(b'before')
-    print('RECONNECT TEST: closing then reopening the same serial port; no reset command.',flush=True)
-    if hasattr(port,'enable_quiet'):port.enable_quiet()
-    port.close();pause(.5);open_after_reconnect(port,clock,pause)
-    challenge(b'after')
-    start=len(raw);send(b'/bin/cat /etc/c5-proof\n')
-    await_response(start,b'C5FILE:external-cat\r\n')
-    start=len(raw);send(b'exit 0\n')
-    await_response(start,helpers['CHECKPOINT'],prompt=False)
-    code,msg=assess_interactive(raw,helpers)
-    if code==0:
-        return 0,'PASS (limited): fresh PID1 replies before/after serial close/open, external cat and clean exit; actual warm system reset remains unqualified'
-    return code,msg
 
 def init_session(port,raw,record,txlog,helpers,clock=None,nonce=None,flash_read=False,expected_data_fnv=None):
     """Validate actual uname/proc/mount output after /init, then exit."""
@@ -238,17 +173,12 @@ def main():
     p.add_argument('--power-cycle',action='store_true',help='Wait for same USB device to disappear for5 seconds and reconnect before capture')
     p.add_argument('--interactive',action='store_true',help='Hand keyboard to the Flash-booted shell after prompt')
     p.add_argument('--manual-seconds',type=int,default=120,help='Interactive window15..240 seconds (default120)')
-    p.add_argument('--reconnect-test',action='store_true',help='Automatic same-session serial close/open test after power-cycle boot')
-    p.add_argument('--quiet-reopen',action='store_true',help='Reconnect test: clear HUPCL before close and skip explicit modem writes on reopen')
     p.add_argument('--init-test',action='store_true',help='Automatic /init/uname/proc/sysfs user test after power-cycle boot')
     p.add_argument('--flash-read-test',action='store_true',help='Also validate read-only SRAM Flash and actual user MTD read')
     p.add_argument('--data-sample-fnv',type=lambda value:int(value,16),help='Expected FNV-1a of first64 bytes of data region from owner backup')
     args=p.parse_args()
-    if args.init_test and (args.interactive or args.reconnect_test or not args.power_cycle):p.error('--init-test requires --power-cycle and excludes other session modes')
+    if args.init_test and (args.interactive or not args.power_cycle):p.error('--init-test requires --power-cycle and excludes other session modes')
     if args.flash_read_test and (not args.init_test or args.data_sample_fnv is None):p.error('--flash-read-test requires --init-test and --data-sample-fnv')
-    if args.quiet_reopen and not args.reconnect_test:p.error('--quiet-reopen requires --reconnect-test')
-    if args.quiet_reopen and serial.__version__!='3.5':p.error('--quiet-reopen requires reviewed pyserial3.5')
-    if args.reconnect_test and (args.interactive or not args.power_cycle):p.error('--reconnect-test requires --power-cycle and excludes --interactive')
     if not 15<=args.manual_seconds<=240:p.error('--manual-seconds must be15..240')
     if args.interactive and not sys.stdin.isatty():p.error('--interactive requires a terminal on standard input')
     if not 15<=args.seconds<=180:p.error('--seconds must be15..180')
@@ -257,7 +187,7 @@ def main():
     if args.power_cycle:
         args.port,event=wait_power_cycle(args.port)
         path.with_suffix('.event.json').write_text(json.dumps(event,indent=2)+'\n')
-    port_class=QuietSerial if args.quiet_reopen else serial.Serial
+    port_class=serial.Serial
     port=port_class(port=None,baudrate=115200,timeout=.2,exclusive=True)
     port.dtr=False;port.rts=False;port.port=args.port
     raw=bytearray();session_result=None
@@ -293,18 +223,6 @@ def main():
                             flash_read=args.flash_read_test,expected_data_fnv=args.data_sample_fnv)
                         except (RuntimeError,TimeoutError) as error:session_result=(1,'FAIL: init/user test: '+str(error))
                     break
-                if args.reconnect_test and code==0:
-                    with path.with_suffix('.stdin.bin').open('xb') as txlog:
-                        nonce=secrets.token_hex(8).encode()
-                        path.with_suffix('.challenge.txt').write_bytes(nonce+b'\n')
-                        try:
-                            session_result=reconnect_session(port,raw,record,txlog,session_tools(),nonce=nonce)
-                        except (RuntimeError,TimeoutError) as error:
-                            session_result=(1,'FAIL: serial reconnect test: '+str(error))
-                        if event is not None:
-                            event.update(quiet_reopen_requested=args.quiet_reopen,quiet_reopen_active=getattr(port,'quiet_mode',False),hupcl_disabled=getattr(port,'hupcl_disabled',False),session_result_code=session_result[0])
-                            path.with_suffix('.event.json').write_text(json.dumps(event,indent=2)+'\n')
-                    break
                 if args.interactive and code==0:
                     with path.with_suffix('.stdin.bin').open('xb') as txlog:
                         session_result=interact(port,raw,record,txlog,args.manual_seconds,opened_at+300,session_tools())
@@ -312,7 +230,7 @@ def main():
                 if code!=2:break
     finally:port.close()
     code,message=session_result if session_result is not None else assess(raw)
-    if args.power_cycle and code==0 and not (args.interactive or args.reconnect_test or args.init_test):
+    if args.power_cycle and code==0 and not (args.interactive or args.init_test):
         reason=re.search(rb'rst:[^\r\n]+',raw)
         observed=reason[0].decode('ascii',errors='replace') if reason else 'not captured'
         message='PASS (limited): Flash/Linux/hush boot after observed USB disconnect/reconnect; reset cause: '+observed

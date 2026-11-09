@@ -14,7 +14,7 @@ USER_CROSS := $(TC_OUTPUT)/host/bin/riscv32-buildroot-linux-uclibc-
 export C5_PYTHON := $(PYTHON)
 STORAGE_WRITE ?= 0
 export STORAGE_WRITE
-.PHONY: help fetch prepare toolchain busybox rootfs kernel linux dtb ram-loader bootloader flash-image all check
+.PHONY: help fetch prepare toolchain busybox rootfs kernel linux dtb ram-loader bootloader flash-image flash-service all check
 help:
 	@printf '%s\n' 'make fetch       Download pinned upstream sources' 'make prepare     Apply kernel patch to fresh source copy if absent' 'make toolchain   Build RV32 Linux GCC/libc with Buildroot' 'make busybox     Configure and compile BusyBox' 'make rootfs      Stage files and build independent cramfs' 'make kernel      Build rootfs and compile Linux (alias: make linux)' 'make dtb         Compile device tree' 'make ram-loader  Compile shared loader/DTB (legacy uploader cannot load rootfs)' 'make bootloader  Compile Flash bootloader' 'make flash-image Package five Flash payloads (requires kernel/DTB)' 'make all         Run stages in order after make fetch' 'make check       Host checks only; no hardware qualification' 'Build targets never open ports or write Flash.'
 fetch:
@@ -24,7 +24,7 @@ fetch:
 	bash scripts/fetch-psram-reference.sh
 	bash scripts/fetch-cpu-reference.sh
 prepare:
-	@test -d kernel/linux-6.12 || $(PYTHON) -B kernel/prepare.py
+	bash kernel/prepare.sh
 toolchain:
 	bash user/toolchain/configure.sh
 	$(MAKE) -C $(BR_SOURCE) O=$(TC_OUTPUT) BR2_DEFCONFIG=$(TC_OUTPUT)/c5_defconfig defconfig
@@ -78,7 +78,5 @@ all:
 check:
 	$(MAKE) -C kernel/flash-service check PYTHON=$(PYTHON)
 	$(PYTHON) -B user/rootfs/test_host.py
-	$(PYTHON) -B kernel/test_host.py
-	$(PYTHON) -B bootloader/psram/test_host.py
-	$(PYTHON) -B bootloader/test_host.py
-
+	$(PYTHON) -B tests/test_kernel.py
+	$(PYTHON) -B tests/test_bootloader.py

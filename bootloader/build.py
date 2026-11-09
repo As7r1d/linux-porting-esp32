@@ -82,8 +82,8 @@ def main():
         custom_layout=True,partition_table_used=False,flash_written=False,regions=regions,
         warning='Overwrites existing bootloader/firmware data in listed sectors. No OTA/security/rollback. Existing Linux remains a bounded diagnostic kernel.')
     (BUILD/'plan.json').write_text(json.dumps(plan,indent=2)+'\n')
-    inputs=[PROJECT/'Makefile',ROOT/'Makefile',ROOT/'main.c',ROOT/'start.S',ROOT/'memory.ld',ROOT/'rom-functions.ld',ROOT/'build.py',ROOT/'test_host.py',ROOT/'review.py',ROOT/'preflight.sh',ROOT/'flash.py',ROOT/'capture.py',
-        PROJECT/'bootloader/psram/main.c',PROJECT/'bootloader/psram/run.py']
+    inputs=[PROJECT/'Makefile',ROOT/'Makefile',ROOT/'main.c',ROOT/'start.S',ROOT/'memory.ld',ROOT/'rom-functions.ld',ROOT/'build.py',ROOT/'review.py',ROOT/'preflight.sh',ROOT/'flash.py',ROOT/'capture.py',ROOT/'console.py',
+        PROJECT/'bootloader/psram/main.c']
     ref=PROJECT/'reference/esp-idf-v5.5.1'
     inputs += [ref/n for n in ['components/riscv/include/riscv/csr.h','components/soc/esp32c5/register/soc/lp_wdt_reg.h',
         'components/soc/esp32c5/register/soc/timer_group_reg.h','components/soc/esp32c5/register/soc/reg_base.h',

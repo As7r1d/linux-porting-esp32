@@ -2,7 +2,7 @@
 """Offline ROM-image, erase-layout and actual Flash-copy routine tests."""
 from pathlib import Path
 import unittest,struct,subprocess,tempfile,json,hashlib,runpy,re
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parent.parent/'bootloader'
 class Checks(unittest.TestCase):
     def test_rom_image_and_payload_integrity(self):
         from esptool.targets.esp32c5 import ESP32C5ROM
@@ -269,7 +269,7 @@ int main(int argc,char **argv){
 
     def interactive_fixture(self):
         cap=runpy.run_path(str(ROOT/'capture.py'))
-        fixtures=runpy.run_path(str(ROOT.parent/'bootloader/psram/test_host.py'))
+        fixtures=runpy.run_path(str(ROOT.parent/'tests/fixtures.py'))
         helpers=cap['session_tools']()
         boot=b'C5 FLASH BOOT v1\nC5 FLASH VERIFIED; JUMP entry=42000000 dt=427f0000\nLinux version 6.12\n'+fixtures['LEDGER']+fixtures['HEAD']
         done=fixtures['SHELL_LEDGER']+helpers['CHECKPOINT']+b'\n'
@@ -343,80 +343,9 @@ int main(int argc,char **argv){
         self.assertEqual(check(a),check(b))
         self.assertIsNone(check(types.SimpleNamespace(serial_number=None,location=None)))
 
-    def exercise_reconnect(self, mode):
-        import io
-        cap,h,boot,done=self.interactive_fixture()
-        raw=bytearray(boot+b'C5 USB RESET POLICY before=00000000 after=00000004 serial_reset_disabled=1\n')
-        now=[0.0];tx=io.BytesIO();nonce=b'0123456789abcdef'
-        class Port:
-            buf=b'';opens=0;closes=0
-            @property
-            def in_waiting(self):return len(self.buf)
-            def close(self):self.closes+=1
-            def open(self):
-                self.opens+=1
-                if mode=='reboot':self.buf+=b'C5 FLASH BOOT v1\nLinux version 6.12\n'
-            def read(self,n):
-                now[0]+=.25
-                out,self.buf=self.buf[:n],self.buf[n:];return out
-            def write(self,data):
-                if data.startswith(b"printf 'C5LINK:"):
-                    stage=b'after' if b':after:' in data else b'before'
-                    if mode=='replay' and stage==b'after':stage=b'before'
-                    self.buf+=b'C5LINK:'+nonce+b':'+stage+b':1\r\n/ # '
-                elif data==b'/bin/cat /etc/c5-proof\n':self.buf+=b'C5FILE:external-cat\r\n/ # '
-                elif data==b'exit 0\n':self.buf+=done
-                else:raise AssertionError(data)
-                return len(data)
-        port=Port()
-        def run():return cap['reconnect_session'](port,raw,raw.extend,tx,h,lambda:now[0],lambda n:now.__setitem__(0,now[0]+n),nonce)
-        if mode=='reboot':
-            with self.assertRaises(RuntimeError):run()
-        elif mode=='replay':
-            with self.assertRaises(TimeoutError):run()
-        else:
-            self.assertEqual(run()[0],0)
-            self.assertEqual(port.opens,1);self.assertEqual(port.closes,1)
-            self.assertIn(b'/bin/cat /etc/c5-proof',tx.getvalue())
-        return cap,h,boot,port
 
-    def test_reconnect_requires_fresh_reply_without_reboot(self):
-        self.exercise_reconnect('good')
-        self.exercise_reconnect('reboot')
-        self.exercise_reconnect('replay')
 
-    def test_reconnect_refuses_to_close_port_without_policy_readback(self):
-        import io,types
-        cap,h,boot,done=self.interactive_fixture()
-        def unexpected():self.fail('Port must not close without policy marker')
-        port=types.SimpleNamespace(close=unexpected)
-        result=cap['reconnect_session'](port,bytearray(boot),lambda b:None,io.BytesIO(),h,nonce=b'0123456789abcdef')
-        self.assertEqual(result[0],2)
 
-    def test_quiet_serial_actual_pty_io_and_no_modem_updates(self):
-        import os,pty,termios,serial
-        from unittest.mock import patch
-        quiet=runpy.run_path(str(ROOT/'capture.py'))['QuietSerial']
-        master,slave=pty.openpty();port=None
-        try:
-            attrs=termios.tcgetattr(slave);attrs[2]|=termios.HUPCL
-            termios.tcsetattr(slave,termios.TCSANOW,attrs)
-            with patch.object(serial.Serial,'_update_dtr_state',side_effect=AssertionError('Unexpected DTR write')),patch.object(serial.Serial,'_update_rts_state',side_effect=AssertionError('Unexpected RTS write')):
-                port=quiet(port=None,baudrate=115200,timeout=.2)
-                port.quiet_mode=True
-                port.dtr=False;port.rts=False;port.port=os.ttyname(slave);port.open()
-                self.assertTrue(port.hupcl_disabled)
-                self.assertFalse(termios.tcgetattr(slave)[2]&termios.HUPCL)
-                os.write(master,b'hello');self.assertEqual(port.read(5),b'hello')
-                self.assertEqual(port.write(b'world'),5);self.assertEqual(os.read(master,5),b'world')
-                attrs=termios.tcgetattr(slave);attrs[2]|=termios.HUPCL
-                termios.tcsetattr(slave,termios.TCSANOW,attrs)
-                port.enable_quiet();port.close();port.open()
-                self.assertFalse(termios.tcgetattr(slave)[2]&termios.HUPCL)
-                os.write(master,b'again');self.assertEqual(port.read(5),b'again')
-        finally:
-            if port is not None:port.close()
-            os.close(master);os.close(slave)
 
     def exercise_init_test(self, missing_cpu=False, old_root=False, flash_read=False):
         import io
