@@ -1,0 +1,33 @@
+# Private research evidence, full Flash backups and previous layouts
+/.local/
+/logs/
+**/checkpoints/
+# Dependencies and generated artifacts
+/reference/
+/kernel/linux-6.12/
+**/build/
+/user/toolchain/output
+/user/toolchain/smoke/
+/user/toolchain/logs/
+/user/toolchain/built.json
+/user/toolchain/configured.json
+/user/toolchain/configured-SHA256SUMS
+/public-output/
+/.venv/
+__pycache__/
+*.pyc
+# Board images and private captures
+*.bin
+*.elf
+*.cpio
+*.cramfs
+*.jffs2
+*.serial.*
+# Editor/environment state
+/.agents/
+/.codex/
+/.aws/
+.env
+.env.*
+*.pem
+*.key

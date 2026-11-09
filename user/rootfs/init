@@ -1,0 +1,21 @@
+#!/bin/hush
+PATH=/bin
+export PATH
+/bin/mount -t proc proc /proc || { echo 'C5 INIT FAIL: proc mount'; exit 1; }
+/bin/mount -t sysfs sysfs /sys || { echo 'C5 INIT FAIL: sysfs mount'; exit 1; }
+# Only explicitly volatile locations are writable. /data is never backed by tmpfs.
+/bin/mount -t ramfs ramfs /tmp || { echo 'C5 INIT FAIL: volatile /tmp'; exit 1; }
+/bin/mount -t ramfs ramfs /run || { echo 'C5 INIT FAIL: volatile /run'; exit 1; }
+read -r cmdline < /proc/cmdline
+case " $cmdline " in
+    *" c5_flash_write=1 "*)
+        /bin/mount -t jffs2 mtd:data /data || { echo 'C5 INIT FAIL: persistent /data mount'; exit 1; }
+        echo 'C5 DATA READY: JFFS2 /data mounted; power-cycle verification pending'
+        ;;
+    *) echo 'C5 DATA: read-only Flash probe; no data filesystem mounted' ;;
+esac
+echo 'C5 ROOTFS READY: independent cramfs mounted read-only; data mode reported separately'
+echo 'C5 INIT READY: proc and sysfs mounted; starting interactive shell'
+exec /bin/hush -i
+echo 'C5 INIT FAIL: shell exec'
+exit 1

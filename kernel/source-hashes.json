@@ -1,0 +1,110 @@
+{
+  "arch/riscv/Kconfig": {
+    "base": "f344838853cd008f9252d72a82b19a8e655d73d57431ae60fba71958f6e3c377",
+    "modified": "5ea9121b7d3d0e63ed8d4591df87e48116a36cd56fc7e340e6391017c076d8ee"
+  },
+  "arch/riscv/kernel/head.S": {
+    "base": "7687200f4e268079eccc111a6713705ff9b720d6d62075abd96502aa3de95b21",
+    "modified": "da05a898baa868c03d33bb7afab72f1bc90cb97f7d3f1178380acc7c5b8c7715"
+  },
+  "drivers/tty/serial/Makefile": {
+    "base": "0223b49fc065f896ec1f923ad883aeee78198ff252ccf95719f4c670816a5414",
+    "modified": "1032765e34bf09a2084bdb9b35196727f340583d6aae5f8300bd10098d97dfd8"
+  },
+  "drivers/tty/serial/earlycon-esp32c5.c": {
+    "base": null,
+    "modified": "1da7b5d2a5c476af11ded1abc198a8a6c3fafcac64c9508d80a861590c9e6e6d"
+  },
+  "arch/riscv/kernel/setup.c": {
+    "base": "16b572e32792ae97563c0ae7ecf3a6977ebf11f91ba317916bba9543eaf08c93",
+    "modified": "bfd644cf8280f670dec76ed767900dee06f14ac7e5843d6f8ef995ff5e821812"
+  },
+  "arch/riscv/kernel/Makefile": {
+    "base": "7a41a7b2abe85a8ab1631c65ad5a9e6dc43f13a83cd6e9fc47514a34ef4612f8",
+    "modified": "9cd85be13f83ba8bc25b4393fc9c063df9edb74a5bceaf52b8d40b375148a1f9"
+  },
+  "arch/riscv/include/asm/c5-bootstrap.h": {
+    "base": null,
+    "modified": "c6b6a64781fd7225b9bfb65efcfed344d6c40222b90046c9d20a1c68be07e29f"
+  },
+  "arch/riscv/kernel/c5-memory.c": {
+    "base": null,
+    "modified": "941089e3160d407de28509c03b2278c74f71bd1ae83312f7d5af97572f002c33"
+  },
+  "init/main.c": {
+    "base": "dfa6cecef3ee0c4ef3e9768d161f7739d9fbfa5c0a821c11ee53afde8dca3ec6",
+    "modified": "b6e05cc6d792a153a3621852618b363216c01d337edef8eb83e8d5eaf9609263"
+  },
+  "arch/riscv/kernel/entry.S": {
+    "base": "b7e70064c70da83ba84e369eb82118290d6061ed41ea351f18861fc2befa44d7",
+    "modified": "3eaf778bde253728981daa63defd9d06a5a6a675b57127aa4fb0d9d7d0fe485b"
+  },
+  "drivers/irqchip/Makefile": {
+    "base": "a07563486be73892112a0f8a4c8174315ab0e39108d65370a7c6be7ec0f16332",
+    "modified": "f47912a5c7aa50f4e34ebc58f740c61c4ab4bcc8ea1d902fc9c92e1192f7f76a"
+  },
+  "drivers/irqchip/irq-esp32c5.c": {
+    "base": null,
+    "modified": "d2e33f35a15ad5a8f666e177a0d41e2ae654c56a1649f8e0730aaae54a8408a9"
+  },
+  "arch/riscv/kernel/c5-timer-irq.c": {
+    "base": null,
+    "modified": "9c505a00f2b66ad38b34225897d4287c1ef425c32f1af3bedb591c6b22139164"
+  },
+  "arch/riscv/include/asm/timex.h": {
+    "base": "daa6b6a4b090ae889cf0c0bd1f37fdda6bee29ad1b1d4b099c5b28261b79802b",
+    "modified": "74a4c0fa4e3b80326d9b14459bbb79b8fcf896b222a9e4049f46c52a9c54af87"
+  },
+  "drivers/clocksource/Makefile": {
+    "base": "c84225ad758961a0e6b47286f7edcbb2bb40f66aa38a85ab60fe336da1506932",
+    "modified": "8967d227ec8ba55485c9d5840a0a0d8279ac966e329782d0780c70f5b5df0a89"
+  },
+  "drivers/clocksource/timer-esp32c5.c": {
+    "base": null,
+    "modified": "326f727271cedbbbe8c873e8749d95d12f0608fd60e7e3042e03d4f3a495dbeb"
+  },
+  "arch/riscv/kernel/c5-sched.c": {
+    "base": null,
+    "modified": "94e5f56001ba8fd76deb1f632a50e31c64b99000556f7d20632d78cd8034718b"
+  },
+  "arch/riscv/kernel/process.c": {
+    "base": "45828ae259e11a9210e3ef1b6131394dd9216b374179ffbf733eeabb7cf41d45",
+    "modified": "cc37e3f5b9244a7b1825076c9af64973be42ddc9f3d43723792b0f2e91961a3e"
+  },
+  "arch/riscv/kernel/traps.c": {
+    "base": "a0b83feac127e7d312ffc9812858dae4a6cb8aecd11695d97b37e959f9b9301f",
+    "modified": "020515be141be8270dfca13bb70954c7847139b62aa60b7a7f1bb6a9ea9de08e"
+  },
+  "kernel/exit.c": {
+    "base": "7c28bfc644117470b9cbe6d46c84580de98225755bbb227e61d638ea7104025d",
+    "modified": "11e01875a5b52b365b4acb8f5b8afd15db728b3939e242e85e8fab372bb99165"
+  },
+  "arch/riscv/kernel/c5-user.c": {
+    "base": null,
+    "modified": "8ff3e969c70dec2fa4fba1bd296a1fba29211edf4b6061b94879f2d49e1e3724"
+  },
+  "drivers/tty/serial/esp32c5-usb.c": {
+    "base": null,
+    "modified": "5b882fc984b318bd0e9b23549771a7955c9d9584e2beb230c2665109faece3d6"
+  },
+  "arch/riscv/kernel/c5-libc.c": {
+    "base": null,
+    "modified": "332e2c70efc5702701d0c9f23a3aa225054ef03e4df8a2228790171f272c1b6e"
+  },
+  "arch/riscv/kernel/signal.c": {
+    "base": "6f6601a6de02076878d7d1e8a3b08e99bc97dc3df0e5b92caea0a4634fb5672c",
+    "modified": "4cbdc0199c246d71befc800883a047e9edf4fa1f33fcf0b26838f818fcbe2c0a"
+  },
+  "drivers/mtd/devices/Makefile": {
+    "base": "3135a67abfe327b835b92459d3b51be55e66c4f873eac88e5e2d8c5d862430ed",
+    "modified": "1738edc27f9dabc2788a7fa72da6867a4dd8511d84743281e7f8de1d7aeb4c38"
+  },
+  "drivers/mtd/devices/esp32c5-flash.c": {
+    "base": null,
+    "modified": "34204bfca11443463a1403f5361ddae10899b07803e257c3aba7e1b13bd3073b"
+  },
+  "drivers/mtd/devices/c5-flash-abi.h": {
+    "base": null,
+    "modified": "7ec7b0831658df4e3323e30b3f960ef65e4de0db48d89da58127399f7e32cee5"
+  }
+}

@@ -1,0 +1,50 @@
+/dts-v1/;
+/ {
+    #address-cells = <1>;
+    #size-cells = <1>;
+    model = "ESP32-C5 experimental Linux early boot";
+    compatible = "experimental,esp32c5-early-boot";
+    chosen { bootargs = "earlycon=esp32c5usb console=ttyCUSB0 loglevel=7 nohlt root=mtd:rootfs rootfstype=cramfs ro init=/init"; };
+    memory@42000000 { device_type = "memory"; reg = <0x42000000 0x00800000>; };
+    reserved-memory {
+        #address-cells = <1>; #size-cells = <1>; ranges;
+        dtb@427f0000 { reg = <0x427f0000 0x10000>; no-map; };
+        rootfs@42700000 { reg = <0x42700000 0xf0000>; no-map; };
+    };
+    rootfs@42700000 {
+        compatible = "mtd-rom";
+        reg = <0x42700000 0xf0000>;
+        bank-width = <1>;
+        linux,mtd-name = "rootfs";
+    };
+    flash-service@40808000 {
+        compatible = "experimental,esp32c5-data-flash";
+        reg = <0x40808000 0x6000>, <0x60003000 0x400>;
+    };
+    clic: interrupt-controller@20800000 {
+        compatible = "experimental,esp32c5-clic";
+        reg = <0x20800000 0x2000>;
+        interrupt-controller; #interrupt-cells = <1>; #address-cells = <0>;
+    };
+    timer@6000a000 {
+        compatible = "experimental,esp32c5-systimer";
+        reg = <0x6000a000 0x100>; clock-frequency = <16000000>;
+        interrupt-parent = <&clic>; interrupts = <23>;
+    };
+    usb@6000f000 {
+        compatible = "experimental,esp32c5-usb-serial";
+        reg = <0x6000f000 0x100>;
+    };
+    cpus {
+        #address-cells = <1>; #size-cells = <0>;
+        /* XTAL-derived C5 nominal rate; driver verifies clock selection. */
+        timebase-frequency = <16000000>;
+        cpu@0 {
+            device_type = "cpu"; reg = <0>; status = "okay";
+            compatible = "riscv";
+            riscv,isa-base = "rv32i";
+            riscv,isa-extensions = "i", "m", "a", "c", "zicsr", "zifencei";
+            mmu-type = "riscv,none";
+        };
+    };
+};

@@ -1,0 +1,1 @@
+Independent cramfs root. Experimental SRAM Flash backend; JFFS2 /data requires c5_flash_write=1. Power-cycle persistence validation is pending.
