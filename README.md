@@ -61,15 +61,3 @@ Read [board operations](docs/BOARD.md) before using the serial tools.
 See [storage](docs/STORAGE.md), [validation](docs/VALIDATION.md) and
 [third-party notices](NOTICE.md). Historical board results are not automatic
 qualification of binaries rebuilt after this directory reorganization.
-
-## Source publication
-
-```sh
-make public-check
-make source
-```
-
-Publish the source-only directory/archive printed by `make source`. It excludes
-board backups, captures, identifiers, local dependencies, symlinks and binaries.
-Review the exported source and license status in `NOTICE.md`. No command
-creates a GitHub remote or pushes anything.
